@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Loader2,
   RefreshCw,
@@ -15,10 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/payment/hooks/useAuth";
-import {
-  createPaymentLinkForBooking,
-  updateBookingStatus,
-} from "@/features/payment/server/payment.functions";
+import { createPaymentLinkForBooking, updateBookingStatus } from "@/features/payment/api";
 import {
   buildConfirmationMessage,
   buildPaymentLinkMessage,
@@ -30,58 +27,48 @@ import type { Database } from "@/integrations/supabase/types";
 
 type BookingRow = Database["public"]["Tables"]["booking_requests"]["Row"];
 
-export const Route = createFileRoute("/admin/payments")({
-  head: () => ({
-    meta: [
-      { title: "Admin · Pagos · Castle Tours" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
-  component: AdminPaymentsPage,
-});
-
-function AdminPaymentsPage() {
+export default function AdminPaymentsPage() {
   const { session, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!authLoading && !session) {
-      navigate({ to: "/auth" });
+      navigate("/auth");
     }
   }, [authLoading, session, navigate]);
 
-  if (authLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[color:var(--color-muted-foreground)]" />
-      </main>
-    );
-  }
-
-  if (!session) return null;
-
-  if (!isAdmin) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[color:var(--color-paper)] px-4">
-        <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-[var(--shadow-card)]">
-          <h1 className="font-display text-2xl">Acceso restringido</h1>
-          <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
-            Tu cuenta ({session.user.email}) no tiene rol de administrador. Pídele al propietario
-            del sitio que te asigne el rol <code className="rounded bg-[color:var(--color-paper-warm)] px-1.5 py-0.5">admin</code> en
-            la tabla <code className="rounded bg-[color:var(--color-paper-warm)] px-1.5 py-0.5">user_roles</code>.
-          </p>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="mt-6 rounded-full bg-[color:var(--color-ink)] px-5 py-2 text-sm text-white"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  return <Dashboard />;
+  return (
+    <>
+      <Helmet>
+        <title>Admin · Pagos · Castle Tours</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      {authLoading ? (
+        <main className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[color:var(--color-muted-foreground)]" />
+        </main>
+      ) : !session ? null : !isAdmin ? (
+        <main className="flex min-h-screen items-center justify-center bg-[color:var(--color-paper)] px-4">
+          <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-[var(--shadow-card)]">
+            <h1 className="font-display text-2xl">Acceso restringido</h1>
+            <p className="mt-2 text-sm text-[color:var(--color-muted-foreground)]">
+              Tu cuenta ({session.user.email}) no tiene rol de administrador. Pídele al propietario
+              del sitio que te asigne el rol <code className="rounded bg-[color:var(--color-paper-warm)] px-1.5 py-0.5">admin</code> en
+              la tabla <code className="rounded bg-[color:var(--color-paper-warm)] px-1.5 py-0.5">user_roles</code>.
+            </p>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="mt-6 rounded-full bg-[color:var(--color-ink)] px-5 py-2 text-sm text-white"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </main>
+      ) : (
+        <Dashboard />
+      )}
+    </>
+  );
 }
 
 function Dashboard() {
@@ -90,9 +77,6 @@ function Dashboard() {
   const [filter, setFilter] = useState<"all" | "pending" | "link_sent" | "paid">("all");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const createLinkFn = useServerFn(createPaymentLinkForBooking);
-  const updateStatusFn = useServerFn(updateBookingStatus);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,19 +96,14 @@ function Dashboard() {
 
   useEffect(() => {
     load();
-
-    // Realtime updates so 'paid' status appears live after webhook
     const channel = supabase
       .channel("booking-requests-admin")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "booking_requests" },
-        () => {
-          load();
-        }
+        () => load()
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -136,8 +115,7 @@ function Dashboard() {
     setBusyId(row.id);
     setErrorMsg(null);
     try {
-      const res = await createLinkFn({ data: { bookingRequestId: row.id } });
-      // copy to clipboard
+      const res = await createPaymentLinkForBooking(row.id);
       await navigator.clipboard.writeText(res.url).catch(() => {});
       await load();
     } catch (e) {
@@ -150,7 +128,7 @@ function Dashboard() {
   const handleStatus = async (row: BookingRow, status: BookingRow["status"]) => {
     setBusyId(row.id);
     try {
-      await updateStatusFn({ data: { bookingRequestId: row.id, status } });
+      await updateBookingStatus(row.id, status);
       await load();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Error actualizando");

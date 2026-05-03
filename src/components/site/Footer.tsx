@@ -1,6 +1,6 @@
 import { WHATSAPP_DISPLAY, buildWaLink, genericMessage } from "@/lib/whatsapp";
 import { MessageCircle, Mail, Lock } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import logo from "@/assets/castle-tours-logo.png";
 import { useT, useI18n } from "@/lib/i18n";
 

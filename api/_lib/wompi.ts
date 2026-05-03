@@ -1,11 +1,3 @@
-/**
- * Wompi API helpers — server-only.
- * Docs: https://docs.wompi.co/docs/colombia/enlaces-de-pago/
- *
- * Sandbox base: https://sandbox.wompi.co/v1
- * Production base: https://production.wompi.co/v1
- */
-
 export type WompiEnv = "sandbox" | "production";
 
 function wompiBase(env: WompiEnv) {
@@ -14,9 +6,8 @@ function wompiBase(env: WompiEnv) {
     : "https://sandbox.wompi.co/v1";
 }
 
-function getEnv(): WompiEnv {
-  const v = process.env.WOMPI_ENV;
-  return v === "production" ? "production" : "sandbox";
+export function getWompiEnv(): WompiEnv {
+  return process.env.WOMPI_ENV === "production" ? "production" : "sandbox";
 }
 
 function getPrivateKey(): string {
@@ -32,12 +23,11 @@ export function getEventsSecret(): string {
 }
 
 export interface CreatePaymentLinkInput {
-  name: string;            // shown on the Wompi page
-  description: string;     // shown on the Wompi page
-  amountInCents: number;   // deposit in cents (COP has no decimals → x100)
+  name: string;
+  description: string;
+  amountInCents: number;
   currency?: "COP";
-  expiresAt?: string;      // ISO string
-  /** Identifier we attach so the webhook can match back to our booking_requests row */
+  expiresAt?: string;
   reference: string;
   collectShipping?: boolean;
   redirectUrl?: string;
@@ -45,12 +35,14 @@ export interface CreatePaymentLinkInput {
 
 export interface WompiPaymentLink {
   id: string;
-  /** Public URL to share with the customer */
   url: string;
 }
 
-export async function createWompiPaymentLink(input: CreatePaymentLinkInput): Promise<WompiPaymentLink> {
-  const base = wompiBase(getEnv());
+export async function createWompiPaymentLink(
+  input: CreatePaymentLinkInput
+): Promise<WompiPaymentLink> {
+  const env = getWompiEnv();
+  const base = wompiBase(env);
   const body = {
     name: input.name.slice(0, 60),
     description: input.description.slice(0, 240),
@@ -60,8 +52,6 @@ export async function createWompiPaymentLink(input: CreatePaymentLinkInput): Pro
     amount_in_cents: input.amountInCents,
     expires_at: input.expiresAt,
     redirect_url: input.redirectUrl,
-    // Wompi exposes this back on the webhook as `transaction.payment_link_id` and on payment_links as id.
-    // Reference goes into `customer_data` not metadata; we mirror it in `name` for UI clarity.
   };
 
   const res = await fetch(`${base}/payment_links`, {
@@ -85,17 +75,12 @@ export async function createWompiPaymentLink(input: CreatePaymentLinkInput): Pro
   } catch {
     throw new Error(`Wompi returned non-JSON response: ${text.slice(0, 200)}`);
   }
-
   const data = (json as { data?: { id?: string } }).data;
   if (!data?.id) {
     throw new Error(`Wompi response missing data.id: ${text.slice(0, 200)}`);
   }
-
-  // Public checkout URL
-  const checkoutHost =
-    getEnv() === "production" ? "https://checkout.wompi.co" : "https://checkout.wompi.co";
   return {
     id: data.id,
-    url: `${checkoutHost}/l/${data.id}`,
+    url: `https://checkout.wompi.co/l/${data.id}`,
   };
 }
