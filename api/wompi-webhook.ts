@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createHash } from "crypto";
 import { getSupabaseAdmin } from "./_lib/supabase";
 import { getEventsSecret } from "./_lib/wompi";
-import type { Database } from "../src/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 
 interface WompiEventBody {
   event?: string;

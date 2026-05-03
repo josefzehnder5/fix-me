@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 import { requireUser } from "./_lib/supabase";
 
 const inputSchema = z.object({
