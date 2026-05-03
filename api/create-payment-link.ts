@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
-import { getSupabaseAdmin, requireAdmin } from "./_lib/supabase.js";
-import { createWompiPaymentLink } from "./_lib/wompi.js";
+import { getSupabaseAdmin, requireAdmin } from "./_lib/supabase";
+import { createWompiPaymentLink } from "./_lib/wompi";
 
 const inputSchema = z.object({
   bookingRequestId: z.string().uuid(),

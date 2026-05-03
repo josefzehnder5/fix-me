@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../src/integrations/supabase/types.js";
-import { requireUser } from "./_lib/supabase.js";
+import type { Database } from "../src/integrations/supabase/types";
+import { requireUser } from "./_lib/supabase";
 
 const inputSchema = z.object({
   bookingRequestId: z.string().uuid(),
