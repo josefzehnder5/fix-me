@@ -20,3 +20,8 @@ export default function App() {
     </LanguageProvider>
   );
 }
+// Unter den anderen imports:
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+
+// In den Routes, vor NotFoundPage:
+<Route path="/admin" element={<AdminDashboard />} />
