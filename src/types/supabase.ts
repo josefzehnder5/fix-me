@@ -38,7 +38,23 @@ export interface Database {
           total_amount_cop?: number | null;
           wompi_transaction_id?: string | null;
         };
-        Update: Partial<Insert>;
+        Update: {
+          created_at?: string;
+          customer_email?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          deposit_amount_cop?: number;
+          deposit_percent?: number | null;
+          id?: string;
+          number_of_people?: number;
+          paid_amount_cop?: number | null;
+          payment_status?: string | null;
+          status?: string;
+          tour_date?: string;
+          tour_id?: string;
+          total_amount_cop?: number | null;
+          wompi_transaction_id?: string | null;
+        };
       };
       user_roles: {
         Row: {
@@ -53,7 +69,12 @@ export interface Database {
           role: string;
           user_id: string;
         };
-        Update: Partial<Insert>;
+        Update: {
+          created_at?: string;
+          id?: string;
+          role?: string;
+          user_id?: string;
+        };
       };
       wompi_events: {
         Row: {
@@ -70,7 +91,13 @@ export interface Database {
           id?: string;
           signature?: string | null;
         };
-        Update: Partial<Insert>;
+        Update: {
+          created_at?: string;
+          event_data?: Json | null;
+          event_type?: string;
+          id?: string;
+          signature?: string | null;
+        };
       };
       tours: {
         Row: {
@@ -89,7 +116,14 @@ export interface Database {
           location?: string | null;
           created_at?: string;
         };
-        Update: Partial<Insert>;
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          duration?: string | null;
+          location?: string | null;
+          created_at?: string;
+        };
       };
       tour_prices: {
         Row: {
@@ -108,7 +142,14 @@ export interface Database {
           nights?: number | null;
           created_at?: string;
         };
-        Update: Partial<Insert>;
+        Update: {
+          id?: string;
+          tour_id?: string;
+          price_display?: string;
+          price_cop?: number;
+          nights?: number | null;
+          created_at?: string;
+        };
       };
       tour_photos: {
         Row: {
@@ -127,11 +168,18 @@ export interface Database {
           display_order?: number;
           created_at?: string;
         };
-        Update: Partial<Insert>;
+        Update: {
+          id?: string;
+          tour_id?: string;
+          photo_url?: string;
+          caption?: string | null;
+          display_order?: number;
+          created_at?: string;
+        };
       };
     };
     Views: {};
     Functions: {};
     Enums: {};
   };
-}
+      }
