@@ -26,3 +26,7 @@ export default function App() {
     </LanguageProvider>
   );
 }
+import ToursCMS from '@/pages/admin/ToursCMS';
+
+// Fügen Sie diese Zeile zu den anderen Routes hinzu:
+<Route path="/admin/tours-cms" element={<ToursCMS />} />
