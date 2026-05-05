@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mein CMS Test</title>
+</head>
+<body>
+    <h1>🧪 CMS Test Bereich</h1>
+    
+    <!-- Hier kommt später das CMS rein -->
+    <div id="app">
+        <p>Status: <span style="color: green;">✅ CMS ist bereit</span></p>
+        <p>Das hier ist nur ein Test - dein richtiges Projekt bleibt unverändert!</p>
+    </div>
+    
+    <hr>
+    <h2>Test-Inhalt bearbeiten:</h2>
+    <textarea id="content" rows="10" cols="50">
+        Das ist ein Test-Text.
+        Den kannst du gefahrlos ändern!
+    </textarea>
+    <br>
+    <button onclick="saveContent()">💾 Speichern</button>
+    <button onclick="loadContent()">📂 Laden</button>
+    
+    <script>
+        function saveContent() {
+            const text = document.getElementById('content').value;
+            localStorage.setItem('cms-content', text);
+            alert('✅ Gespeichert! (Nur im Browser, noch nicht in Dateien)');
+        }
+        
+        function loadContent() {
+            const text = localStorage.getItem('cms-content');
+            if (text) {
+                document.getElementById('content').value = text;
+                alert('📂 Geladen!');
+            } else {
+                alert('Noch nichts gespeichert');
+            }
+        }
+    </script>
+</body>
+</html>
