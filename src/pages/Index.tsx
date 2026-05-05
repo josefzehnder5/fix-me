@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Hero } from "@/components/site/Hero";
 import { QuickFinder } from "@/components/site/QuickFinder";
@@ -10,12 +10,43 @@ import { WhyUs } from "@/components/site/WhyUs";
 import { StickyWhatsApp } from "@/components/site/StickyWhatsApp";
 import { Footer } from "@/components/site/Footer";
 import { LanguageModal } from "@/components/site/LanguageModal";
-import { featuredTours, type Tour, type TourCategory } from "@/data/tours";
+import { featuredTours, tours, type Tour, type TourCategory } from "@/data/tours";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function IndexPage() {
   const [openTour, setOpenTour] = useState<Tour | null>(null);
   const [presetCategory, setPresetCategory] = useState<TourCategory | null>(null);
+  const [mergedFeatured, setMergedFeatured] = useState<Tour[]>(featuredTours);
   const tourGridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadOverrides() {
+      try {
+        const { data: prices } = await supabase.from("tour_prices").select("*");
+        const { data: photos } = await supabase.from("tour_photos").select("*");
+
+        if (prices || photos) {
+          const updated = tours.map(tour => {
+            let t = { ...tour };
+            const priceOverride = prices?.find((p: any) => p.tour_id === tour.id);
+            if (priceOverride) {
+              t.priceDisplay = priceOverride.price_display;
+              t.priceFromCop = priceOverride.price_from_cop;
+            }
+            const photoOverride = photos?.find((p: any) => p.tour_id === tour.id && p.is_hero);
+            if (photoOverride) {
+              t.heroImage = photoOverride.photo_url;
+            }
+            return t;
+          });
+          setMergedFeatured(updated.filter(t => t.featured).slice(0, 6));
+        }
+      } catch (err) {
+        console.error("Supabase-Fehler:", err);
+      }
+    }
+    loadOverrides();
+  }, []);
 
   const handleCategoryPick = (cat: TourCategory) => {
     setPresetCategory(cat);
@@ -36,7 +67,7 @@ export default function IndexPage() {
         <Hero />
         <QuickFinder onOpen={setOpenTour} />
         <CategoryGrid onPick={handleCategoryPick} />
-        <FeaturedTours tours={featuredTours} onOpen={setOpenTour} />
+        <FeaturedTours tours={mergedFeatured} onOpen={setOpenTour} />
         <TourGrid ref={tourGridRef} onOpen={setOpenTour} presetCategory={presetCategory} />
         <WhyUs />
         <Footer />
